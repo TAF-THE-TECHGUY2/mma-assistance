@@ -34,6 +34,28 @@ export interface CasePayload {
   priority?: Priority;
   assigned_department?: string | null;
   date_opened?: string;
+  due_date?: string | null;
+  // Optional detail-record seed fields captured at booking.
+  admission_date?: string | null;
+  consult_date?: string | null;
+  ongoing_treatment?: boolean;
+  appointment_date?: string | null;
+  lab_type?: string | null;
+  treating_doctor?: string | null;
+  area?: string | null;
+}
+
+/**
+ * GET /api/upcoming-cases — open cases ordered by due date (overdue first,
+ * undated last). Used by the Upcoming Cases view.
+ */
+export async function getUpcomingCases(
+  params: { case_type?: CaseType } = {},
+): Promise<MedicalCase[]> {
+  const { data } = await api.get<{ data: MedicalCase[] }>('/upcoming-cases', {
+    params,
+  });
+  return data.data;
 }
 
 export async function getCases(

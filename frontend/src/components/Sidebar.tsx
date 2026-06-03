@@ -4,6 +4,7 @@ import {
   Users as UsersIcon,
   UserPlus,
   Briefcase,
+  CalendarClock,
   BedDouble,
   Stethoscope,
   FlaskConical,
@@ -52,6 +53,7 @@ const SECTIONS: NavSection[] = [
         roles: ['booking', 'admin'],
       },
       { label: 'Cases', to: '/cases', icon: Briefcase },
+      { label: 'Upcoming Cases', to: '/upcoming', icon: CalendarClock },
       {
         label: 'New Case',
         to: '/cases/create',

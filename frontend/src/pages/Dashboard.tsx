@@ -163,7 +163,7 @@ function caseToRow(c: MedicalCase): RecentCaseRow {
 /* Workflow alerts                                                             */
 /* -------------------------------------------------------------------------- */
 
-type AlertTone = 'amber' | 'sky' | 'violet';
+type AlertTone = 'amber' | 'sky' | 'violet' | 'rose';
 
 interface WorkflowAlert {
   id: string;
@@ -181,6 +181,8 @@ function alertToneClasses(tone: AlertTone): string {
       return 'border-sky-200 bg-sky-50 text-sky-800';
     case 'violet':
       return 'border-violet-200 bg-violet-50 text-violet-800';
+    case 'rose':
+      return 'border-rose-200 bg-rose-50 text-rose-800';
     default:
       return 'border-slate-200 bg-slate-50 text-slate-800';
   }
@@ -253,6 +255,24 @@ export default function Dashboard() {
     if (!stats) return [];
     const alerts: WorkflowAlert[] = [];
 
+    if (stats.overdue_cases > 0) {
+      alerts.push({
+        id: 'overdue',
+        label: 'Cases OVERDUE — past their due date',
+        count: stats.overdue_cases,
+        tone: 'rose',
+        to: '/upcoming',
+      });
+    }
+    if (stats.due_this_week > 0) {
+      alerts.push({
+        id: 'due-week',
+        label: 'Cases due within 7 days',
+        count: stats.due_this_week,
+        tone: 'amber',
+        to: '/upcoming',
+      });
+    }
     if (stats.pending_admin_review > 0) {
       alerts.push({
         id: 'admin-review',

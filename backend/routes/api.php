@@ -95,6 +95,7 @@ Route::middleware('auth:sanctum')->group(function () {
     | Update / delete: operations / admin (or owner).
     */
     Route::get('/cases', [CaseController::class, 'index'])->name('cases.index');
+    Route::get('/upcoming-cases', [CaseController::class, 'upcoming'])->name('cases.upcoming');
     Route::get('/cases/{case}', [CaseController::class, 'show'])->name('cases.show');
 
     Route::post('/cases', [CaseController::class, 'store'])

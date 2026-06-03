@@ -12,6 +12,7 @@ import PatientProfile from './pages/PatientProfile';
 import Cases from './pages/Cases';
 import CreateCase from './pages/CreateCase';
 import CaseDetail from './pages/CaseDetail';
+import UpcomingCases from './pages/UpcomingCases';
 import InpatientRegister from './pages/InpatientRegister';
 import OutpatientRegister from './pages/OutpatientRegister';
 import LaboratoryRequests from './pages/LaboratoryRequests';
@@ -51,6 +52,7 @@ export default function App() {
             <Route path="/patients/create" element={<CreatePatient />} />
             <Route path="/patients/:id" element={<PatientProfile />} />
             <Route path="/cases" element={<Cases />} />
+            <Route path="/upcoming" element={<UpcomingCases />} />
             <Route path="/cases/create" element={<CreateCase />} />
             <Route path="/cases/:id" element={<CaseDetail />} />
             <Route path="/inpatient" element={<InpatientRegister />} />

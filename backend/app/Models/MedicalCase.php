@@ -67,6 +67,7 @@ class MedicalCase extends Model
         'assigned_department',
         'created_by',
         'date_opened',
+        'due_date',
     ];
 
     /**
@@ -89,6 +90,7 @@ class MedicalCase extends Model
     {
         return [
             'date_opened' => 'date',
+            'due_date' => 'date',
         ];
     }
 

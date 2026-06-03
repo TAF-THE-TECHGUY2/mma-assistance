@@ -1,12 +1,7 @@
 import { useEffect, useState, FormEvent } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { ArrowLeft, Save } from 'lucide-react';
-import {
-  createCase,
-  updateInpatientDetail,
-  updateOutpatientDetail,
-  updateLaboratoryDetail,
-} from '../api/cases';
+import { createCase } from '../api/cases';
 import { getPatients } from '../api/patients';
 import type { Patient, CaseType, Priority } from '../types';
 
@@ -44,6 +39,7 @@ export default function CreateCase() {
   const [caseType, setCaseType] = useState<CaseType>('inpatient');
   const [priority, setPriority] = useState<Priority>('medium');
   const [department, setDepartment] = useState<string>('Operations');
+  const [dueDate, setDueDate] = useState<string>('');
 
   // Type-specific seed fields for the detail record.
   const [admissionDate, setAdmissionDate] = useState('');
@@ -89,34 +85,31 @@ export default function CreateCase() {
 
     setSubmitting(true);
     try {
+      // Create the case AND its initial detail fields in one request
+      // (Booking is permitted to do this; the per-type detail endpoints are not).
       const created = await createCase({
         patient_id: Number(patientId),
         case_type: caseType,
         priority,
         assigned_department: department || null,
+        due_date: dueDate || null,
+        ...(caseType === 'inpatient'
+          ? { admission_date: admissionDate || null }
+          : {}),
+        ...(caseType === 'outpatient'
+          ? { consult_date: consultDate || null, ongoing_treatment: ongoingTreatment }
+          : {}),
+        ...(caseType === 'laboratory'
+          ? {
+              appointment_date: appointmentDate || null,
+              lab_type: labType || null,
+              treating_doctor: treatingDoctor || null,
+              area: area || null,
+            }
+          : {}),
       });
 
-      // Seed the relevant detail record for the chosen case type.
-      const caseId = created.id;
-      if (caseType === 'inpatient') {
-        await updateInpatientDetail(caseId, {
-          admission_date: admissionDate || null,
-        });
-      } else if (caseType === 'outpatient') {
-        await updateOutpatientDetail(caseId, {
-          consult_date: consultDate || null,
-          ongoing_treatment: ongoingTreatment,
-        });
-      } else if (caseType === 'laboratory') {
-        await updateLaboratoryDetail(caseId, {
-          appointment_date: appointmentDate || null,
-          lab_type: labType || null,
-          treating_doctor: treatingDoctor || null,
-          area: area || null,
-        });
-      }
-
-      navigate(`/cases/${caseId}`);
+      navigate(`/cases/${created.id}`);
     } catch (err: any) {
       setError(
         err?.response?.data?.message ?? 'Failed to create case.',
@@ -232,6 +225,22 @@ export default function CreateCase() {
                 </option>
               ))}
             </select>
+          </div>
+
+          <div className="sm:col-span-2">
+            <label className={labelClass} htmlFor="due_date">
+              Due Date{' '}
+              <span className="font-normal text-slate-400">
+                — when the client needs this case completed (optional)
+              </span>
+            </label>
+            <input
+              id="due_date"
+              type="date"
+              value={dueDate}
+              onChange={(e) => setDueDate(e.target.value)}
+              className={inputClass}
+            />
           </div>
         </div>
 

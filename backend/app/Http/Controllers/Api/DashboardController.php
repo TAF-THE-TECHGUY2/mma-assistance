@@ -65,6 +65,15 @@ class DashboardController extends Controller
                 'pending_billing' => $casesByStage[MedicalCase::STAGE_BILLING],
                 'pending_admin_review' => $casesByStage[MedicalCase::STAGE_ADMIN_REVIEW],
                 'pending_documents' => Document::where('document_status', 'pending')->count(),
+                'overdue_cases' => MedicalCase::whereNotNull('due_date')
+                    ->whereDate('due_date', '<', now()->toDateString())
+                    ->where('case_status', '!=', MedicalCase::STATUS_CLOSED)
+                    ->count(),
+                'due_this_week' => MedicalCase::whereNotNull('due_date')
+                    ->whereDate('due_date', '>=', now()->toDateString())
+                    ->whereDate('due_date', '<=', now()->addDays(7)->toDateString())
+                    ->where('case_status', '!=', MedicalCase::STATUS_CLOSED)
+                    ->count(),
                 'recent_cases' => $recentCases,
                 'monthly_trends' => $this->monthlyTrends(),
             ],

@@ -75,6 +75,7 @@ export interface MedicalCase {
   assigned_department?: string | null;
   created_by?: number | null;
   date_opened: string;
+  due_date?: string | null;
   created_at?: string;
   updated_at?: string;
   // Optional eager-loaded relations
@@ -216,6 +217,8 @@ export interface DashboardStats {
   pending_billing: number;
   pending_admin_review: number;
   pending_documents: number;
+  overdue_cases: number;
+  due_this_week: number;
   recent_cases: MedicalCase[];
 }
 

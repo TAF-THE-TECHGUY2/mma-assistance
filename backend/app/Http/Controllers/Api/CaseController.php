@@ -63,9 +63,23 @@ class CaseController extends Controller
             });
         }
 
+        if ($request->boolean('overdue')) {
+            $query->whereNotNull('due_date')
+                ->whereDate('due_date', '<', now()->toDateString())
+                ->where('case_status', '!=', MedicalCase::STATUS_CLOSED);
+        }
+
+        if ($dueFrom = $request->query('due_from')) {
+            $query->whereDate('due_date', '>=', $dueFrom);
+        }
+
+        if ($dueTo = $request->query('due_to')) {
+            $query->whereDate('due_date', '<=', $dueTo);
+        }
+
         $sort = $request->query('sort', 'created_at');
         $direction = $request->query('direction', 'desc') === 'asc' ? 'asc' : 'desc';
-        $allowedSorts = ['case_number', 'case_status', 'workflow_stage', 'priority', 'date_opened', 'created_at'];
+        $allowedSorts = ['case_number', 'case_status', 'workflow_stage', 'priority', 'date_opened', 'due_date', 'created_at'];
         if (in_array($sort, $allowedSorts, true)) {
             $query->orderBy($sort, $direction);
         }
@@ -85,6 +99,30 @@ class CaseController extends Controller
     }
 
     /**
+     * GET /api/upcoming-cases
+     * Open (non-closed) cases ordered by due date — dated cases first, soonest
+     * due at the top — so staff can see what's overdue / due soon and assign a
+     * due date to anything still missing one. Drives the Upcoming Cases view.
+     */
+    public function upcoming(Request $request): JsonResponse
+    {
+        $query = MedicalCase::query()
+            ->with('patient')
+            ->where('case_status', '!=', MedicalCase::STATUS_CLOSED);
+
+        if ($type = $request->query('case_type')) {
+            $query->where('case_type', $type);
+        }
+
+        $cases = $query
+            ->orderByRaw('due_date IS NULL')   // dated cases first, undated last
+            ->orderBy('due_date')
+            ->get();
+
+        return response()->json(['data' => $cases]);
+    }
+
+    /**
      * POST /api/cases
      * Create a new case. Generates a unique case number and a type-specific
      * detail record.
@@ -99,6 +137,15 @@ class CaseController extends Controller
             'priority' => ['nullable', 'in:low,medium,high,urgent'],
             'assigned_department' => ['nullable', 'string', 'max:255'],
             'date_opened' => ['nullable', 'date'],
+            'due_date' => ['nullable', 'date'],
+            // Optional detail-record seed fields captured at booking.
+            'admission_date' => ['nullable', 'date'],
+            'consult_date' => ['nullable', 'date'],
+            'ongoing_treatment' => ['nullable', 'boolean'],
+            'appointment_date' => ['nullable', 'date'],
+            'lab_type' => ['nullable', 'string', 'max:255'],
+            'treating_doctor' => ['nullable', 'string', 'max:255'],
+            'area' => ['nullable', 'string', 'max:255'],
         ]);
 
         $case = MedicalCase::create([
@@ -111,10 +158,11 @@ class CaseController extends Controller
             'assigned_department' => $data['assigned_department'] ?? null,
             'created_by' => Auth::id(),
             'date_opened' => $data['date_opened'] ?? now()->toDateString(),
+            'due_date' => $data['due_date'] ?? null,
         ]);
 
-        // Create the type-specific detail row.
-        $this->createDetailRecord($case);
+        // Create the type-specific detail row, seeded with any booking inputs.
+        $this->createDetailRecord($case, $data);
 
         AuditService::log(
             'case.created',
@@ -190,6 +238,7 @@ class CaseController extends Controller
             'priority' => ['sometimes', 'in:low,medium,high,urgent'],
             'assigned_department' => ['nullable', 'string', 'max:255'],
             'date_opened' => ['sometimes', 'date'],
+            'due_date' => ['sometimes', 'nullable', 'date'],
         ]);
 
         $before = $case->toArray();
@@ -393,19 +442,37 @@ class CaseController extends Controller
     }
 
     /**
-     * Create the type-specific detail record for a freshly created case.
+     * Create the type-specific detail record for a freshly created case,
+     * seeded with any initial fields captured at booking (admission/consult/
+     * appointment date, etc.). This runs as part of case creation so Booking
+     * can set them without needing the operations-only detail endpoints.
+     *
+     * @param  array<string, mixed>  $seed
      */
-    private function createDetailRecord(MedicalCase $case): void
+    private function createDetailRecord(MedicalCase $case, array $seed = []): void
     {
         switch ($case->case_type) {
             case 'inpatient':
-                \App\Models\InpatientDetail::create(['case_id' => $case->id]);
+                \App\Models\InpatientDetail::create([
+                    'case_id' => $case->id,
+                    'admission_date' => $seed['admission_date'] ?? null,
+                ]);
                 break;
             case 'outpatient':
-                \App\Models\OutpatientDetail::create(['case_id' => $case->id]);
+                \App\Models\OutpatientDetail::create([
+                    'case_id' => $case->id,
+                    'consult_date' => $seed['consult_date'] ?? null,
+                    'ongoing_treatment' => $seed['ongoing_treatment'] ?? false,
+                ]);
                 break;
             case 'laboratory':
-                \App\Models\LaboratoryDetail::create(['case_id' => $case->id]);
+                \App\Models\LaboratoryDetail::create([
+                    'case_id' => $case->id,
+                    'appointment_date' => $seed['appointment_date'] ?? null,
+                    'lab_type' => $seed['lab_type'] ?? null,
+                    'treating_doctor' => $seed['treating_doctor'] ?? null,
+                    'area' => $seed['area'] ?? null,
+                ]);
                 break;
         }
     }

@@ -50,11 +50,14 @@ ssh -i your-key.pem ubuntu@YOUR_ELASTIC_IP
 ## 2. Install the stack
 ```bash
 sudo apt update && sudo apt upgrade -y
+sudo apt install -y software-properties-common ca-certificates lsb-release apt-transport-https
+sudo add-apt-repository ppa:ondrej/php -y
+sudo apt update
 
-# PHP 8.3 + extensions Laravel/PhpSpreadsheet need, FPM, Nginx, MySQL, tools
+# PHP 8.4 + extensions Laravel/PhpSpreadsheet need, FPM, Nginx, MySQL, tools
 sudo apt install -y nginx mysql-server git unzip \
-  php8.3-fpm php8.3-cli php8.3-mysql php8.3-mbstring php8.3-xml \
-  php8.3-curl php8.3-zip php8.3-gd php8.3-bcmath php8.3-intl
+  php8.4-fpm php8.4-cli php8.4-mysql php8.4-mbstring php8.4-xml \
+  php8.4-curl php8.4-zip php8.4-gd php8.4-bcmath php8.4-intl
 
 # Composer
 curl -sS https://getcomposer.org/installer | php
@@ -64,6 +67,7 @@ sudo mv composer.phar /usr/local/bin/composer
 curl -fsSL https://deb.nodesource.com/setup_20.x | sudo -E bash -
 sudo apt install -y nodejs
 ```
+Ubuntu 24.04's official repositories provide PHP 8.3, so PHP 8.4 comes from the `ppa:ondrej/php` repository.
 
 ---
 
@@ -87,9 +91,10 @@ EXIT;
 ```bash
 sudo mkdir -p /var/www/mma && sudo chown -R $USER:$USER /var/www/mma
 cd /var/www/mma
-git clone YOUR_REPO_URL .        # results in /var/www/mma/backend and /var/www/mma/frontend
+git clone https://github.com/TAF-THE-TECHGUY2/mma-assistance.git .
 ```
-(No repo yet? From your laptop: `scp -i key.pem -r "medical room"/* ubuntu@IP:/var/www/mma/`)
+(This creates `/var/www/mma/backend` and `/var/www/mma/frontend`.)
+(No repo access? From your laptop: `scp -i key.pem -r "medical room"/* ubuntu@IP:/var/www/mma/`)
 
 ---
 
@@ -133,7 +138,8 @@ Then:
 php artisan migrate --force
 php artisan db:seed --force      # OPTIONAL: seeds demo users/cases. Skip for a clean start.
 php artisan storage:link         # serves uploaded documents
-php artisan config:cache route:cache
+php artisan config:cache
+php artisan route:cache
 ```
 
 ---
@@ -157,10 +163,11 @@ ls /var/www/mma/frontend/public/mma-logo.png
 
 ## 7. Permissions
 ```bash
-sudo chown -R www-data:www-data /var/www/mma
-sudo find /var/www/mma/backend/storage -type d -exec chmod 775 {} \;
-sudo chmod -R 775 /var/www/mma/backend/bootstrap/cache
+sudo chown -R $USER:www-data /var/www/mma
+sudo find /var/www/mma/backend/storage /var/www/mma/backend/bootstrap/cache -type d -exec chmod 2775 {} \;
+sudo find /var/www/mma/backend/storage /var/www/mma/backend/bootstrap/cache -type f -exec chmod 664 {} \;
 ```
+This keeps the codebase owned by your deploy user while allowing the Nginx/PHP worker user (`www-data`) to write Laravel's runtime files.
 
 ---
 
@@ -198,8 +205,8 @@ Certbot edits the Nginx config to add 443 + auto-redirect, and auto-renews.
 ## Deploying updates later
 ```bash
 cd /var/www/mma && git pull
-cd backend && composer install --no-dev --optimize-autoloader && php artisan migrate --force
-php artisan config:cache route:cache
+cd backend && composer install --no-dev --optimize-autoloader && php artisan optimize:clear && php artisan migrate --force
+php artisan config:cache && php artisan route:cache
 cd ../frontend && npm ci && npm run build && cp -r dist/* ../backend/public/
 sudo systemctl restart mma-queue
 sudo systemctl reload nginx
