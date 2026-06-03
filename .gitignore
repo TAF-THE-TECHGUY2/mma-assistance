@@ -1,0 +1,23 @@
+# ===== Dependencies & build output =====
+/backend/vendor/
+/frontend/node_modules/
+/frontend/dist/
+
+# ===== Environment & secrets (NEVER commit) =====
+.env
+**/.env
+*.pem
+auth.json
+
+# ===== Databases & logs =====
+/backend/database/*.sqlite
+*.log
+
+# ===== Compiled / cached =====
+/backend/bootstrap/cache/*.php
+
+# ===== Tooling & OS =====
+/.claude/
+.DS_Store
+.idea/
+.vscode/

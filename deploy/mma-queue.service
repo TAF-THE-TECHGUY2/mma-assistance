@@ -1,0 +1,28 @@
+# systemd unit that keeps the notification-email queue worker running.
+#
+# Install:
+#   sudo cp deploy/mma-queue.service /etc/systemd/system/mma-queue.service
+#   sudo systemctl daemon-reload
+#   sudo systemctl enable --now mma-queue
+#   sudo systemctl status mma-queue          # check it's active
+#   sudo journalctl -u mma-queue -f          # follow logs
+#
+# Restart it after each deploy so it picks up new code:
+#   sudo systemctl restart mma-queue
+
+[Unit]
+Description=Meridian MMA queue worker (notification emails)
+After=network.target mysql.service
+
+[Service]
+User=www-data
+Group=www-data
+Restart=always
+RestartSec=5
+WorkingDirectory=/var/www/mma/backend
+ExecStart=/usr/bin/php /var/www/mma/backend/artisan queue:work --sleep=1 --tries=6 --max-time=3600
+StandardOutput=append:/var/log/mma-queue.log
+StandardError=append:/var/log/mma-queue.log
+
+[Install]
+WantedBy=multi-user.target
