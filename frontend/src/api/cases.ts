@@ -29,6 +29,9 @@ export interface CaseQuery {
 export interface CasePayload {
   patient_id: number;
   case_type: CaseType;
+  file_number?: string | null;
+  treating_doctor?: string | null;
+  notes?: string | null;
   case_status?: CaseStatus;
   workflow_stage?: WorkflowStage;
   priority?: Priority;
@@ -41,7 +44,6 @@ export interface CasePayload {
   ongoing_treatment?: boolean;
   appointment_date?: string | null;
   lab_type?: string | null;
-  treating_doctor?: string | null;
   area?: string | null;
 }
 

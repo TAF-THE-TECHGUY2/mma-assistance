@@ -50,8 +50,8 @@ class LaboratoryDetail extends Model
     protected function casts(): array
     {
         return [
-            'appointment_date' => 'date',
-            'date_registered' => 'date',
+            'appointment_date' => 'date:Y-m-d',
+            'date_registered' => 'date:Y-m-d',
         ];
     }
 

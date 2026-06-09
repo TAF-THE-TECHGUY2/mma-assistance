@@ -25,16 +25,12 @@ ssh -i your-key.pem ubuntu@EC2_IP
 ## 2. Install everything
 ```bash
 sudo apt update && sudo apt upgrade -y
-sudo apt install -y software-properties-common ca-certificates lsb-release apt-transport-https
-sudo add-apt-repository ppa:ondrej/php -y
-sudo apt update
 sudo apt install -y nginx mysql-server git unzip \
-  php8.4-fpm php8.4-cli php8.4-mysql php8.4-mbstring php8.4-xml \
-  php8.4-curl php8.4-zip php8.4-gd php8.4-bcmath php8.4-intl
+  php8.3-fpm php8.3-cli php8.3-mysql php8.3-mbstring php8.3-xml \
+  php8.3-curl php8.3-zip php8.3-gd php8.3-bcmath php8.3-intl
 curl -sS https://getcomposer.org/installer | php && sudo mv composer.phar /usr/local/bin/composer
 curl -fsSL https://deb.nodesource.com/setup_20.x | sudo -E bash - && sudo apt install -y nodejs
 ```
-Ubuntu 24.04 ships PHP 8.3 by default, so the `ppa:ondrej/php` repo is needed for PHP 8.4 packages.
 
 ## 3. Create the database
 ```bash
@@ -70,7 +66,7 @@ DB_HOST=127.0.0.1
 DB_PORT=3306
 DB_DATABASE=mma
 DB_USERNAME=mma
-DB_PASSWORD=CHANGE_ME_STRONG
+DB_PASSWORD=
 
 QUEUE_CONNECTION=database
 CACHE_STORE=database
@@ -90,8 +86,7 @@ Then:
 php artisan migrate --force
 php artisan db:seed --force        # OPTIONAL demo data; skip for a clean start
 php artisan storage:link
-php artisan config:cache
-php artisan route:cache
+php artisan config:cache route:cache
 ```
 
 ## 6. Build the frontend into the web root
@@ -104,11 +99,9 @@ ls /var/www/mma/frontend/public/mma-logo.png   # confirm the logo is present
 
 ## 7. Permissions
 ```bash
-sudo chown -R $USER:www-data /var/www/mma
-sudo find /var/www/mma/backend/storage /var/www/mma/backend/bootstrap/cache -type d -exec chmod 2775 {} \;
-sudo find /var/www/mma/backend/storage /var/www/mma/backend/bootstrap/cache -type f -exec chmod 664 {} \;
+sudo chown -R www-data:www-data /var/www/mma
+sudo chmod -R 775 /var/www/mma/backend/storage /var/www/mma/backend/bootstrap/cache
 ```
-This keeps the repo deployable by your SSH user while still letting `www-data` write Laravel cache, sessions, logs, and uploads.
 
 ## 8. Nginx
 ```bash
@@ -134,7 +127,7 @@ Browse to **http://EC2_IP** and log in (`owner@mma.test` / `password` if you see
 ## Redeploy after changes
 ```bash
 cd /var/www/mma && git pull
-cd backend && composer install --no-dev --optimize-autoloader && php artisan optimize:clear && php artisan migrate --force && php artisan config:cache && php artisan route:cache
+cd backend && composer install --no-dev --optimize-autoloader && php artisan migrate --force && php artisan config:cache route:cache
 cd ../frontend && npm ci && npm run build && cp -r dist/* ../backend/public/
 sudo systemctl restart mma-queue && sudo systemctl reload nginx
 ```
@@ -146,7 +139,7 @@ sudo sed -i 's/server_name _;/server_name your-domain.co.za;/' /etc/nginx/sites-
 sudo apt install -y certbot python3-certbot-nginx
 sudo certbot --nginx -d your-domain.co.za
 # update APP_URL in backend/.env to https://your-domain.co.za, then:
-cd /var/www/mma/backend && php artisan optimize:clear && php artisan config:cache && php artisan route:cache
+cd /var/www/mma/backend && php artisan config:cache
 ```
 
 ## Don't forget

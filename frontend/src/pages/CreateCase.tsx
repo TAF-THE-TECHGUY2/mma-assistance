@@ -40,6 +40,9 @@ export default function CreateCase() {
   const [priority, setPriority] = useState<Priority>('medium');
   const [department, setDepartment] = useState<string>('Operations');
   const [dueDate, setDueDate] = useState<string>('');
+  const [fileNumber, setFileNumber] = useState<string>('');
+  const [caseDoctor, setCaseDoctor] = useState<string>('');
+  const [notes, setNotes] = useState<string>('');
 
   // Type-specific seed fields for the detail record.
   const [admissionDate, setAdmissionDate] = useState('');
@@ -90,6 +93,9 @@ export default function CreateCase() {
       const created = await createCase({
         patient_id: Number(patientId),
         case_type: caseType,
+        file_number: fileNumber || null,
+        treating_doctor: caseDoctor || null,
+        notes: notes || null,
         priority,
         assigned_department: department || null,
         due_date: dueDate || null,
@@ -174,6 +180,34 @@ export default function CreateCase() {
           </div>
 
           <div>
+            <label className={labelClass} htmlFor="file_number">
+              File Number
+            </label>
+            <input
+              id="file_number"
+              type="text"
+              value={fileNumber}
+              onChange={(e) => setFileNumber(e.target.value)}
+              className={inputClass}
+              placeholder="e.g. ALH33-12-25 (this visit)"
+            />
+          </div>
+
+          <div>
+            <label className={labelClass} htmlFor="case_doctor">
+              Treating Doctor
+            </label>
+            <input
+              id="case_doctor"
+              type="text"
+              value={caseDoctor}
+              onChange={(e) => setCaseDoctor(e.target.value)}
+              className={inputClass}
+              placeholder="e.g. Dr Mark Jose"
+            />
+          </div>
+
+          <div>
             <label className={labelClass} htmlFor="case_type">
               Case Type
             </label>
@@ -240,6 +274,20 @@ export default function CreateCase() {
               value={dueDate}
               onChange={(e) => setDueDate(e.target.value)}
               className={inputClass}
+            />
+          </div>
+
+          <div className="sm:col-span-2">
+            <label className={labelClass} htmlFor="notes">
+              Notes
+            </label>
+            <textarea
+              id="notes"
+              value={notes}
+              onChange={(e) => setNotes(e.target.value)}
+              rows={3}
+              className={inputClass}
+              placeholder="Any notes about this case (visible on the case)..."
             />
           </div>
         </div>

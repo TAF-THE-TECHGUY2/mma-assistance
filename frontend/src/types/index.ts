@@ -67,8 +67,11 @@ export interface Patient {
 export interface MedicalCase {
   id: number;
   case_number: string;
+  file_number?: string | null;
   patient_id: number;
   case_type: CaseType;
+  treating_doctor?: string | null;
+  notes?: string | null;
   case_status: CaseStatus;
   workflow_stage: WorkflowStage;
   priority: Priority;

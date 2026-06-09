@@ -38,17 +38,18 @@ class StorePatientRequest extends FormRequest
                 Rule::unique('patients', 'id_number'),
             ],
 
-            // MMA file number: alphanumeric (with optional dashes/slashes), unique.
+            // MMA file number: optional now (the per-visit file number lives on
+            // the case). Still unique when supplied.
             'mma_file_number'   => [
-                'required',
+                'nullable',
                 'string',
                 'max:50',
                 'regex:/^[A-Za-z0-9\-\/]+$/',
                 Rule::unique('patients', 'mma_file_number'),
             ],
 
-            'area'              => ['required', 'string', 'max:255'],
-            'treating_doctor'   => ['required', 'string', 'max:255'],
+            'area'              => ['nullable', 'string', 'max:255'],
+            'treating_doctor'   => ['nullable', 'string', 'max:255'],
             'date_registered'   => ['required', 'date'],
             'address'           => ['nullable', 'string'],
             'emergency_contact' => ['nullable', 'string', 'max:255'],

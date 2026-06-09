@@ -37,12 +37,12 @@ class InpatientDetail extends Model
     protected function casts(): array
     {
         return [
-            'admission_date' => 'date',
-            'discharge_date' => 'date',
-            'date_to_admin' => 'date',
-            'admin_closure_date' => 'date',
-            'submission_date' => 'date',
-            'date_pastel' => 'date',
+            'admission_date' => 'date:Y-m-d',
+            'discharge_date' => 'date:Y-m-d',
+            'date_to_admin' => 'date:Y-m-d',
+            'admin_closure_date' => 'date:Y-m-d',
+            'submission_date' => 'date:Y-m-d',
+            'date_pastel' => 'date:Y-m-d',
             'mr_requested' => 'boolean',
             'mr_received' => 'boolean',
         ];

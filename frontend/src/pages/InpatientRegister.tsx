@@ -195,7 +195,7 @@ export default function InpatientRegister() {
     const d = (v?: string | null) => (v ? fmtDate(v) : '');
     const columns: PrintColumn<InpatientRow>[] = [
       { header: 'File Date', value: (r) => d(r.case.date_opened) },
-      { header: 'File No', value: (r) => r.detail?.file_number ?? '' },
+      { header: 'File No', value: (r) => r.case.file_number ?? r.detail?.file_number ?? '' },
       {
         header: 'Name of Patient',
         value: (r) => (r.case.patient ? `${r.case.patient.first_name} ${r.case.patient.surname}` : ''),
@@ -308,8 +308,9 @@ export default function InpatientRegister() {
         key: 'file_number',
         header: 'File #',
         sortable: true,
-        accessor: (r) => r.detail?.file_number ?? '',
-        render: (r) => r.detail?.file_number ?? <span className="text-slate-400">—</span>,
+        accessor: (r) => r.case.file_number ?? r.detail?.file_number ?? '',
+        render: (r) =>
+          r.case.file_number ?? r.detail?.file_number ?? <span className="text-slate-400">—</span>,
       },
       {
         key: 'admission_date',

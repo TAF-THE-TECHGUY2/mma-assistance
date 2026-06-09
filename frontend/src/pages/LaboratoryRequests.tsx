@@ -189,9 +189,9 @@ export default function LaboratoryRequests() {
       { header: 'Surname', value: (r) => r.case.patient?.surname ?? '' },
       { header: 'Name', value: (r) => r.case.patient?.first_name ?? '' },
       { header: 'DOB', value: (r) => d(r.case.patient?.date_of_birth) },
-      { header: 'MMA File', value: (r) => r.case.patient?.mma_file_number ?? '' },
+      { header: 'MMA File', value: (r) => r.case.file_number ?? r.case.patient?.mma_file_number ?? '' },
       { header: 'Date of Appointment', value: (r) => d(r.detail?.appointment_date) },
-      { header: 'Treating Doctor', value: (r) => r.detail?.treating_doctor ?? '' },
+      { header: 'Treating Doctor', value: (r) => r.case.treating_doctor ?? r.detail?.treating_doctor ?? '' },
       { header: 'Area', value: (r) => r.detail?.area ?? '' },
       { header: 'Date Req', value: (r) => d(r.detail?.date_registered) },
     ];
@@ -312,8 +312,9 @@ export default function LaboratoryRequests() {
         key: 'treating_doctor',
         header: 'Treating doctor',
         sortable: true,
-        accessor: (r) => r.detail?.treating_doctor ?? '',
-        render: (r) => r.detail?.treating_doctor ?? <span className="text-slate-400">—</span>,
+        accessor: (r) => r.case.treating_doctor ?? r.detail?.treating_doctor ?? '',
+        render: (r) =>
+          r.case.treating_doctor ?? r.detail?.treating_doctor ?? <span className="text-slate-400">—</span>,
       },
       {
         key: 'area',

@@ -51,7 +51,7 @@ class Document extends Model
     protected function casts(): array
     {
         return [
-            'upload_date' => 'date',
+            'upload_date' => 'date:Y-m-d',
         ];
     }
 

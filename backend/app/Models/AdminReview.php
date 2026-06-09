@@ -30,7 +30,7 @@ class AdminReview extends Model
     protected function casts(): array
     {
         return [
-            'admin_closure_date' => 'date',
+            'admin_closure_date' => 'date:Y-m-d',
         ];
     }
 

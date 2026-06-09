@@ -451,7 +451,9 @@ export default function CaseDetail() {
           </h2>
           <dl className="grid grid-cols-1 gap-x-6 gap-y-3 sm:grid-cols-2">
             <InfoRow label="Case Number" value={c.case_number} />
+            <InfoRow label="File Number" value={c.file_number} />
             <InfoRow label="Type" value={c.case_type} />
+            <InfoRow label="Treating Doctor" value={c.treating_doctor} />
             <InfoRow label="Status" value={c.case_status} />
             <InfoRow label="Priority" value={c.priority} />
             <InfoRow
@@ -467,10 +469,20 @@ export default function CaseDetail() {
               value={formatDate(c.date_opened)}
             />
             <InfoRow
-              label="Created"
-              value={formatDateTime(c.created_at)}
+              label="Due Date"
+              value={formatDate(c.due_date)}
             />
           </dl>
+          {c.notes && (
+            <div className="mt-4 border-t border-slate-100 pt-4">
+              <dt className="text-xs uppercase tracking-wide text-slate-400">
+                Notes
+              </dt>
+              <dd className="mt-1 whitespace-pre-wrap text-sm text-slate-700">
+                {c.notes}
+              </dd>
+            </div>
+          )}
         </section>
       </div>
 

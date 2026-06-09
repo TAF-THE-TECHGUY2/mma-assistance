@@ -59,7 +59,7 @@ class RegisterController extends Controller
             $d = $c->inpatientDetail;
             return [
                 $this->date($c->date_opened),
-                $d->file_number ?? '',
+                $c->file_number ?? ($d->file_number ?? ''),
                 $this->patientName($c),
                 $this->date($d->admission_date ?? null),
                 $this->date($d->discharge_date ?? null),
@@ -91,7 +91,7 @@ class RegisterController extends Controller
             $d = $c->outpatientDetail;
             return [
                 $this->date($d->file_date ?? null),
-                $d->file_number ?? '',
+                $c->file_number ?? ($d->file_number ?? ''),
                 $this->patientName($c),
                 $this->date($d->consult_date ?? null),
                 $this->date($d->followup_date ?? null),
@@ -127,9 +127,9 @@ class RegisterController extends Controller
                 $p->surname ?? '',
                 $p->first_name ?? '',
                 $this->date($p->date_of_birth ?? null),
-                $p->mma_file_number ?? '',
+                $c->file_number ?? ($p->mma_file_number ?? ''),
                 $this->date($d->appointment_date ?? null),
-                $d->treating_doctor ?? '',
+                $c->treating_doctor ?? ($d->treating_doctor ?? ''),
                 $d->area ?? '',
                 $this->date($d->date_registered ?? null),
             ];

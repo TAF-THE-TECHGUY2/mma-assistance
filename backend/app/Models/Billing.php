@@ -47,8 +47,8 @@ class Billing extends Model
     protected function casts(): array
     {
         return [
-            'submission_date' => 'date',
-            'date_pastel' => 'date',
+            'submission_date' => 'date:Y-m-d',
+            'date_pastel' => 'date:Y-m-d',
         ];
     }
 

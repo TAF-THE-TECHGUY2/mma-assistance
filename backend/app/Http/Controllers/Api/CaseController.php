@@ -132,6 +132,9 @@ class CaseController extends Controller
         $data = $request->validate([
             'patient_id' => ['required', 'integer', 'exists:patients,id'],
             'case_type' => ['required', 'in:inpatient,outpatient,laboratory'],
+            'file_number' => ['nullable', 'string', 'max:255'],
+            'treating_doctor' => ['nullable', 'string', 'max:255'],
+            'notes' => ['nullable', 'string'],
             'case_status' => ['nullable', 'in:booked,in_progress,admin_review,billing,closed'],
             'workflow_stage' => ['nullable', 'in:operations,admin_review,billing,closed'],
             'priority' => ['nullable', 'in:low,medium,high,urgent'],
@@ -150,8 +153,11 @@ class CaseController extends Controller
 
         $case = MedicalCase::create([
             'case_number' => $this->generateCaseNumber($data['case_type']),
+            'file_number' => $data['file_number'] ?? null,
             'patient_id' => $data['patient_id'],
             'case_type' => $data['case_type'],
+            'treating_doctor' => $data['treating_doctor'] ?? null,
+            'notes' => $data['notes'] ?? null,
             'case_status' => $data['case_status'] ?? 'booked',
             'workflow_stage' => $data['workflow_stage'] ?? 'operations',
             'priority' => $data['priority'] ?? 'medium',
@@ -237,6 +243,9 @@ class CaseController extends Controller
             'workflow_stage' => ['sometimes', 'in:operations,admin_review,billing,closed'],
             'priority' => ['sometimes', 'in:low,medium,high,urgent'],
             'assigned_department' => ['nullable', 'string', 'max:255'],
+            'file_number' => ['sometimes', 'nullable', 'string', 'max:255'],
+            'treating_doctor' => ['sometimes', 'nullable', 'string', 'max:255'],
+            'notes' => ['sometimes', 'nullable', 'string'],
             'date_opened' => ['sometimes', 'date'],
             'due_date' => ['sometimes', 'nullable', 'date'],
         ]);

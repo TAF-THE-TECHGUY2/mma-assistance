@@ -65,9 +65,9 @@ function validate(form: PatientFormState): FormErrors {
     errors.id_number = 'ID number must be exactly 13 digits.';
   }
 
-  if (!form.mma_file_number.trim()) {
-    errors.mma_file_number = 'MMA file number is required.';
-  } else if (!MMA_FILE_RE.test(form.mma_file_number.trim())) {
+  // File number is now optional (the per-visit file number lives on the case);
+  // only validate its format when one is provided.
+  if (form.mma_file_number.trim() && !MMA_FILE_RE.test(form.mma_file_number.trim())) {
     errors.mma_file_number =
       'File number must be 3-20 alphanumeric characters (dashes/slashes allowed).';
   }
@@ -76,9 +76,6 @@ function validate(form: PatientFormState): FormErrors {
     errors.email = 'Enter a valid email address.';
   }
 
-  if (!form.area.trim()) errors.area = 'Area is required.';
-  if (!form.treating_doctor.trim())
-    errors.treating_doctor = 'Treating doctor is required.';
   if (!form.date_registered) errors.date_registered = 'Registration date is required.';
 
   return errors;

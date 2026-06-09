@@ -59,15 +59,18 @@ class MedicalCase extends Model
      */
     protected $fillable = [
         'case_number',
+        'file_number',
         'patient_id',
         'case_type',
         'case_status',
         'workflow_stage',
         'priority',
         'assigned_department',
+        'treating_doctor',
         'created_by',
         'date_opened',
         'due_date',
+        'notes',
     ];
 
     /**
@@ -89,8 +92,8 @@ class MedicalCase extends Model
     protected function casts(): array
     {
         return [
-            'date_opened' => 'date',
-            'due_date' => 'date',
+            'date_opened' => 'date:Y-m-d',
+            'due_date' => 'date:Y-m-d',
         ];
     }
 

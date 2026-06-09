@@ -58,15 +58,15 @@ class UpdatePatientRequest extends FormRequest
 
             'mma_file_number'   => [
                 'sometimes',
-                'required',
+                'nullable',
                 'string',
                 'max:50',
                 'regex:/^[A-Za-z0-9\-\/]+$/',
                 Rule::unique('patients', 'mma_file_number')->ignore($id),
             ],
 
-            'area'              => ['sometimes', 'required', 'string', 'max:255'],
-            'treating_doctor'   => ['sometimes', 'required', 'string', 'max:255'],
+            'area'              => ['sometimes', 'nullable', 'string', 'max:255'],
+            'treating_doctor'   => ['sometimes', 'nullable', 'string', 'max:255'],
             'date_registered'   => ['sometimes', 'required', 'date'],
             'address'           => ['sometimes', 'nullable', 'string'],
             'emergency_contact' => ['sometimes', 'nullable', 'string', 'max:255'],
