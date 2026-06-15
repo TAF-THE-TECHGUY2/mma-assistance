@@ -40,6 +40,7 @@ export interface CasePayload {
   due_date?: string | null;
   // Optional detail-record seed fields captured at booking.
   admission_date?: string | null;
+  hospital?: string | null;
   consult_date?: string | null;
   ongoing_treatment?: boolean;
   appointment_date?: string | null;
@@ -131,6 +132,24 @@ export async function sendToBilling(
 export async function closeCase(id: number | string): Promise<MedicalCase> {
   const { data } = await api.post<SingleResponse<MedicalCase>>(
     `/cases/${id}/close`,
+  );
+  return data.data;
+}
+
+export type CancellationReasonValue =
+  | 'no_show'
+  | 'patient_cancelled'
+  | 'client_cancelled'
+  | 'other';
+
+/** POST /api/cases/{id}/cancel — mark a case as cancelled / no-show. */
+export async function cancelCase(
+  id: number | string,
+  reason: CancellationReasonValue,
+): Promise<MedicalCase> {
+  const { data } = await api.post<SingleResponse<MedicalCase>>(
+    `/cases/${id}/cancel`,
+    { cancellation_reason: reason },
   );
   return data.data;
 }

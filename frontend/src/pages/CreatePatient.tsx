@@ -12,6 +12,7 @@ type PatientFormState = {
   phone: string;
   email: string;
   id_number: string;
+  passport_number: string;
   mma_file_number: string;
   area: string;
   treating_doctor: string;
@@ -33,6 +34,7 @@ const initialState: PatientFormState = {
   phone: '',
   email: '',
   id_number: '',
+  passport_number: '',
   mma_file_number: '',
   area: '',
   treating_doctor: '',
@@ -59,9 +61,9 @@ function validate(form: PatientFormState): FormErrors {
   if (!form.gender) errors.gender = 'Gender is required.';
   if (!form.phone.trim()) errors.phone = 'Phone number is required.';
 
-  if (!form.id_number.trim()) {
-    errors.id_number = 'ID number is required.';
-  } else if (!ID_NUMBER_RE.test(form.id_number.trim())) {
+  // ID is optional now (a passport may be used instead); validate the format
+  // only when an ID number is entered.
+  if (form.id_number.trim() && !ID_NUMBER_RE.test(form.id_number.trim())) {
     errors.id_number = 'ID number must be exactly 13 digits.';
   }
 
@@ -119,6 +121,7 @@ export default function CreatePatient() {
   const [errors, setErrors] = useState<FormErrors>({});
   const [formError, setFormError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
+  const [duplicateWarning, setDuplicateWarning] = useState<string | null>(null);
 
   const update = (field: keyof PatientFormState) => (
     e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>
@@ -133,17 +136,7 @@ export default function CreatePatient() {
     });
   };
 
-  const handleSubmit = async (e: FormEvent) => {
-    e.preventDefault();
-    setFormError(null);
-
-    const validationErrors = validate(form);
-    if (Object.keys(validationErrors).length > 0) {
-      setErrors(validationErrors);
-      setFormError('Please correct the errors below before submitting.');
-      return;
-    }
-
+  const submit = async (force: boolean) => {
     setSubmitting(true);
     try {
       const payload: Partial<Patient> = {
@@ -153,19 +146,31 @@ export default function CreatePatient() {
         gender: form.gender,
         phone: form.phone.trim(),
         email: form.email.trim() || null,
-        id_number: form.id_number.trim(),
-        mma_file_number: form.mma_file_number.trim(),
-        area: form.area.trim(),
-        treating_doctor: form.treating_doctor.trim(),
+        id_number: form.id_number.trim() || null,
+        passport_number: form.passport_number.trim() || null,
+        mma_file_number: form.mma_file_number.trim() || null,
+        area: form.area.trim() || null,
+        treating_doctor: form.treating_doctor.trim() || null,
         date_registered: form.date_registered,
         address: form.address.trim() || null,
         emergency_contact: form.emergency_contact.trim() || null,
         medical_aid_number: form.medical_aid_number.trim() || null,
       };
 
-      const created = await createPatient(payload);
+      const created = await createPatient(payload, { force });
       navigate(`/patients/${created.id}`);
     } catch (err) {
+      const status = (err as { response?: { status?: number } })?.response?.status;
+      const data = (err as { response?: { data?: { message?: string; duplicate_warning?: boolean } } })
+        ?.response?.data;
+
+      // Soft duplicate (same name + DOB) — let the user confirm and add anyway.
+      if (status === 409 && data?.duplicate_warning) {
+        setDuplicateWarning(data.message ?? 'A similar patient already exists.');
+        setFormError(null);
+        return;
+      }
+
       const { fieldErrors, message } = mapServerErrors(err);
       if (Object.keys(fieldErrors).length > 0) {
         setErrors((prev) => ({ ...prev, ...fieldErrors }));
@@ -174,6 +179,21 @@ export default function CreatePatient() {
     } finally {
       setSubmitting(false);
     }
+  };
+
+  const handleSubmit = async (e: FormEvent) => {
+    e.preventDefault();
+    setFormError(null);
+    setDuplicateWarning(null);
+
+    const validationErrors = validate(form);
+    if (Object.keys(validationErrors).length > 0) {
+      setErrors(validationErrors);
+      setFormError('Please correct the errors below before submitting.');
+      return;
+    }
+
+    await submit(false);
   };
 
   const inputClass = (field: keyof PatientFormState) =>
@@ -214,6 +234,29 @@ export default function CreatePatient() {
       {formError && (
         <div className="rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
           {formError}
+        </div>
+      )}
+
+      {duplicateWarning && (
+        <div className="rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800">
+          <p className="font-semibold">Possible duplicate patient</p>
+          <p className="mt-1">{duplicateWarning}</p>
+          <div className="mt-3 flex gap-2">
+            <Link
+              to="/patients"
+              className="rounded-lg border border-amber-300 bg-white px-3 py-1.5 text-sm font-medium text-amber-800 transition hover:bg-amber-100"
+            >
+              Go to Patients
+            </Link>
+            <button
+              type="button"
+              disabled={submitting}
+              onClick={() => void submit(true)}
+              className="rounded-lg bg-amber-600 px-3 py-1.5 text-sm font-medium text-white transition hover:bg-amber-700 disabled:opacity-60"
+            >
+              {submitting ? 'Adding…' : 'Add anyway'}
+            </button>
+          </div>
         </div>
       )}
 
@@ -280,7 +323,8 @@ export default function CreatePatient() {
             </div>
             <div>
               <label className="mb-1 block text-sm font-medium text-slate-700">
-                ID Number <span className="text-red-500">*</span>
+                ID Number{' '}
+                <span className="font-normal text-slate-400">(if available)</span>
               </label>
               <input
                 type="text"
@@ -295,7 +339,22 @@ export default function CreatePatient() {
             </div>
             <div>
               <label className="mb-1 block text-sm font-medium text-slate-700">
-                MMA File Number <span className="text-red-500">*</span>
+                Passport Number{' '}
+                <span className="font-normal text-slate-400">(if no ID)</span>
+              </label>
+              <input
+                type="text"
+                value={form.passport_number}
+                onChange={update('passport_number')}
+                className={inputClass('passport_number')}
+                placeholder="Passport no."
+              />
+              <FieldError field="passport_number" />
+            </div>
+            <div>
+              <label className="mb-1 block text-sm font-medium text-slate-700">
+                MMA File Number{' '}
+                <span className="font-normal text-slate-400">(optional)</span>
               </label>
               <input
                 type="text"
@@ -389,7 +448,7 @@ export default function CreatePatient() {
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
             <div>
               <label className="mb-1 block text-sm font-medium text-slate-700">
-                Area <span className="text-red-500">*</span>
+                Area <span className="font-normal text-slate-400">(optional)</span>
               </label>
               <input
                 type="text"
@@ -402,7 +461,8 @@ export default function CreatePatient() {
             </div>
             <div>
               <label className="mb-1 block text-sm font-medium text-slate-700">
-                Treating Doctor <span className="text-red-500">*</span>
+                Treating Doctor{' '}
+                <span className="font-normal text-slate-400">(optional)</span>
               </label>
               <input
                 type="text"

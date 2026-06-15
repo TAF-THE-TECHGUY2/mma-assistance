@@ -36,7 +36,12 @@ export default function CreateCase() {
   const [patientId, setPatientId] = useState<string>(
     searchParams.get('patient_id') ?? '',
   );
-  const [caseType, setCaseType] = useState<CaseType>('inpatient');
+  const typeParam = searchParams.get('type');
+  const [caseType, setCaseType] = useState<CaseType>(
+    typeParam === 'inpatient' || typeParam === 'outpatient' || typeParam === 'laboratory'
+      ? typeParam
+      : 'inpatient',
+  );
   const [priority, setPriority] = useState<Priority>('medium');
   const [department, setDepartment] = useState<string>('Operations');
   const [dueDate, setDueDate] = useState<string>('');
@@ -46,6 +51,7 @@ export default function CreateCase() {
 
   // Type-specific seed fields for the detail record.
   const [admissionDate, setAdmissionDate] = useState('');
+  const [hospital, setHospital] = useState('');
   const [consultDate, setConsultDate] = useState('');
   const [ongoingTreatment, setOngoingTreatment] = useState(false);
   const [appointmentDate, setAppointmentDate] = useState('');
@@ -100,7 +106,7 @@ export default function CreateCase() {
         assigned_department: department || null,
         due_date: dueDate || null,
         ...(caseType === 'inpatient'
-          ? { admission_date: admissionDate || null }
+          ? { admission_date: admissionDate || null, hospital: hospital || null }
           : {}),
         ...(caseType === 'outpatient'
           ? { consult_date: consultDate || null, ongoing_treatment: ongoingTreatment }
@@ -302,6 +308,19 @@ export default function CreateCase() {
 
           {caseType === 'inpatient' && (
             <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+              <div>
+                <label className={labelClass} htmlFor="hospital">
+                  Hospital
+                </label>
+                <input
+                  id="hospital"
+                  type="text"
+                  value={hospital}
+                  onChange={(e) => setHospital(e.target.value)}
+                  className={inputClass}
+                  placeholder="e.g. Netcare Christiaan Barnard"
+                />
+              </div>
               <div>
                 <label className={labelClass} htmlFor="admission_date">
                   Admission Date

@@ -161,8 +161,8 @@ export default function PatientProfile() {
         surname: draft.surname.trim(),
         phone: draft.phone.trim(),
         email: draft.email?.trim() || null,
-        area: draft.area.trim(),
-        treating_doctor: draft.treating_doctor.trim(),
+        area: draft.area?.trim() || null,
+        treating_doctor: draft.treating_doctor?.trim() || null,
         address: draft.address?.trim() || null,
         emergency_contact: draft.emergency_contact?.trim() || null,
         medical_aid_number: draft.medical_aid_number?.trim() || null,
@@ -255,11 +255,11 @@ export default function PatientProfile() {
               <InfoItem icon={<Mail className="h-4 w-4" />} label="Email" value={patient.email ?? '—'} />
               <InfoItem label="Date of Birth" value={formatDate(patient.date_of_birth)} />
               <InfoItem label="Gender" value={patient.gender} className="capitalize" />
-              <InfoItem icon={<MapPin className="h-4 w-4" />} label="Area" value={patient.area} />
+              <InfoItem icon={<MapPin className="h-4 w-4" />} label="Area" value={patient.area ?? '—'} />
               <InfoItem
                 icon={<Stethoscope className="h-4 w-4" />}
                 label="Treating Doctor"
-                value={patient.treating_doctor}
+                value={patient.treating_doctor ?? '—'}
               />
               <InfoItem label="Registered" value={formatDate(patient.date_registered)} />
               <InfoItem label="Medical Aid #" value={patient.medical_aid_number ?? '—'} />

@@ -1,9 +1,9 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { AlertTriangle, CalendarClock, RefreshCw } from 'lucide-react';
+import { AlertTriangle, CalendarClock, RefreshCw, XCircle } from 'lucide-react';
 
 import type { CaseType, MedicalCase } from '../types';
-import { getUpcomingCases, updateCase } from '../api/cases';
+import { getUpcomingCases, updateCase, cancelCase } from '../api/cases';
 import DataTable, { type Column } from '../components/DataTable';
 import StatusBadge from '../components/StatusBadge';
 
@@ -44,12 +44,6 @@ function dueLabel(due?: string | null): { text: string; cls: string } {
   if (n <= 7) return { text: `Due in ${n}d`, cls: 'bg-amber-100 text-amber-700' };
   if (n <= 31) return { text: `Due in ${n}d`, cls: 'bg-sky-100 text-sky-700' };
   return { text: `Due in ${n}d`, cls: 'bg-slate-100 text-slate-600' };
-}
-
-function fmtDate(value?: string | null): string {
-  if (!value) return '—';
-  const d = new Date(value);
-  return Number.isNaN(d.getTime()) ? value : d.toLocaleDateString();
 }
 
 function patientName(c: MedicalCase): string {
@@ -106,6 +100,38 @@ export default function UpcomingCases() {
     }
   }, []);
 
+  const handleSetFile = useCallback(async (id: number, value: string) => {
+    setSavingId(id);
+    setError(null);
+    try {
+      const updated = await updateCase(id, { file_number: value || null });
+      setRows((prev) => prev.map((c) => (c.id === id ? { ...c, file_number: updated.file_number } : c)));
+    } catch (err: any) {
+      setError(
+        err?.response?.data?.message ??
+          'Could not save the file number (your role may not have permission).',
+      );
+    } finally {
+      setSavingId(null);
+    }
+  }, []);
+
+  const handleNoShow = useCallback(async (id: number) => {
+    if (!window.confirm('Mark this case as a no-show / cancelled? It will move off the upcoming list.')) {
+      return;
+    }
+    setSavingId(id);
+    setError(null);
+    try {
+      await cancelCase(id, 'no_show');
+      setRows((prev) => prev.filter((c) => c.id !== id)); // cancelled drops off upcoming
+    } catch (err: any) {
+      setError(err?.response?.data?.message ?? 'Could not cancel the case.');
+    } finally {
+      setSavingId(null);
+    }
+  }, []);
+
   const counts = useMemo(() => {
     const c = { overdue: 0, week: 0, month: 0, later: 0, none: 0 };
     for (const r of rows) c[bucketOf(r.due_date)]++;
@@ -155,6 +181,24 @@ export default function UpcomingCases() {
       },
       { key: 'patient', header: 'Patient', accessor: (c) => patientName(c), render: (c) => patientName(c) },
       {
+        key: 'file_number',
+        header: 'File # (open on confirm)',
+        render: (c) => (
+          <input
+            type="text"
+            defaultValue={c.file_number ?? ''}
+            disabled={savingId === c.id}
+            placeholder="add when confirmed"
+            onClick={(e) => e.stopPropagation()}
+            onBlur={(e) => {
+              const v = e.target.value.trim();
+              if (v !== (c.file_number ?? '')) void handleSetFile(c.id, v);
+            }}
+            className="w-40 rounded border border-slate-200 px-2 py-1 text-xs text-slate-700 focus:border-teal-400 focus:outline-none focus:ring-1 focus:ring-teal-400"
+          />
+        ),
+      },
+      {
         key: 'case_type',
         header: 'Type',
         accessor: (c) => c.case_type,
@@ -168,9 +212,26 @@ export default function UpcomingCases() {
         header: 'Department',
         render: (c) => c.assigned_department ?? '—',
       },
-      { key: 'date_opened', header: 'Opened', render: (c) => fmtDate(c.date_opened) },
+      {
+        key: 'actions',
+        header: '',
+        render: (c) => (
+          <button
+            type="button"
+            disabled={savingId === c.id}
+            onClick={(e) => {
+              e.stopPropagation();
+              void handleNoShow(c.id);
+            }}
+            className="inline-flex items-center gap-1 rounded-lg border border-rose-200 px-2.5 py-1 text-xs font-medium text-rose-600 transition hover:bg-rose-50 disabled:opacity-50"
+          >
+            <XCircle className="h-3.5 w-3.5" />
+            No-show
+          </button>
+        ),
+      },
     ],
-    [savingId, handleSetDue],
+    [savingId, handleSetDue, handleSetFile, handleNoShow],
   );
 
   return (

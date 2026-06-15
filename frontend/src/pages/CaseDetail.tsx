@@ -11,6 +11,7 @@ import {
   History,
   Send,
   Lock,
+  XCircle,
 } from 'lucide-react';
 import {
   getCase,
@@ -18,6 +19,8 @@ import {
   sendToAdminReview,
   sendToBilling,
   closeCase,
+  cancelCase,
+  type CancellationReasonValue,
 } from '../api/cases';
 import { createDocument } from '../api/documents';
 import type {
@@ -74,6 +77,10 @@ export default function CaseDetail() {
   const [docType, setDocType] = useState('');
   const [docFile, setDocFile] = useState<File | null>(null);
   const [uploading, setUploading] = useState(false);
+
+  const [showCancel, setShowCancel] = useState(false);
+  const [cancelReason, setCancelReason] = useState<CancellationReasonValue>('no_show');
+  const [cancelling, setCancelling] = useState(false);
 
   const load = useCallback(async () => {
     if (!id) return;
@@ -144,6 +151,21 @@ export default function CaseDetail() {
     }
   }
 
+  async function handleCancel() {
+    if (!data) return;
+    setCancelling(true);
+    setActionError(null);
+    try {
+      await cancelCase(data.id, cancelReason);
+      setShowCancel(false);
+      await load();
+    } catch (err: any) {
+      setActionError(err?.response?.data?.message ?? 'Failed to cancel the case.');
+    } finally {
+      setCancelling(false);
+    }
+  }
+
   if (loading) {
     return (
       <div className="flex h-64 items-center justify-center text-sm text-slate-400">
@@ -181,6 +203,14 @@ export default function CaseDetail() {
     (s) => s.stage === c.workflow_stage,
   );
   const isClosed = c.case_status === 'closed';
+  const isCancelled = c.case_status === 'cancelled';
+  const isInactive = isClosed || isCancelled;
+  const REASON_LABELS: Record<CancellationReasonValue, string> = {
+    no_show: 'No-show',
+    patient_cancelled: 'Patient cancelled',
+    client_cancelled: 'Client cancelled',
+    other: 'Other',
+  };
 
   return (
     <div className="space-y-6">
@@ -277,7 +307,7 @@ export default function CaseDetail() {
         <div className="flex flex-wrap gap-3">
           <button
             type="button"
-            disabled={isClosed || actionPending !== null}
+            disabled={isInactive || actionPending !== null}
             onClick={() =>
               runAction('send to operations', sendToOperations)
             }
@@ -290,7 +320,7 @@ export default function CaseDetail() {
           </button>
           <button
             type="button"
-            disabled={isClosed || actionPending !== null}
+            disabled={isInactive || actionPending !== null}
             onClick={() =>
               runAction('send to admin review', sendToAdminReview)
             }
@@ -303,7 +333,7 @@ export default function CaseDetail() {
           </button>
           <button
             type="button"
-            disabled={isClosed || actionPending !== null}
+            disabled={isInactive || actionPending !== null}
             onClick={() => runAction('send to billing', sendToBilling)}
             className="inline-flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-4 py-2 text-sm font-medium text-slate-700 transition hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-50"
           >
@@ -314,12 +344,21 @@ export default function CaseDetail() {
           </button>
           <button
             type="button"
-            disabled={isClosed || actionPending !== null}
+            disabled={isInactive || actionPending !== null}
             onClick={() => runAction('close case', closeCase)}
             className="inline-flex items-center gap-2 rounded-xl bg-slate-800 px-4 py-2 text-sm font-medium text-white transition hover:bg-slate-900 disabled:cursor-not-allowed disabled:opacity-50"
           >
             <Lock className="h-4 w-4" />
             {actionPending === 'close case' ? 'Closing...' : 'Close Case'}
+          </button>
+          <button
+            type="button"
+            disabled={isInactive || actionPending !== null}
+            onClick={() => setShowCancel((v) => !v)}
+            className="inline-flex items-center gap-2 rounded-xl border border-rose-200 bg-rose-50 px-4 py-2 text-sm font-medium text-rose-700 transition hover:bg-rose-100 disabled:cursor-not-allowed disabled:opacity-50"
+          >
+            <XCircle className="h-4 w-4" />
+            Cancel / No-show
           </button>
           <button
             type="button"
@@ -331,6 +370,51 @@ export default function CaseDetail() {
             Upload Document
           </button>
         </div>
+
+        {isCancelled && (
+          <div className="mt-4 rounded-lg border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-700">
+            This case is <strong>cancelled</strong>
+            {c.cancellation_reason ? ` — ${REASON_LABELS[c.cancellation_reason]}` : ''}.
+          </div>
+        )}
+
+        {showCancel && !isInactive && (
+          <div className="mt-5 grid grid-cols-1 gap-4 rounded-lg border border-rose-100 bg-rose-50/60 p-4 sm:grid-cols-2">
+            <div>
+              <label className="mb-1 block text-sm font-medium text-slate-600">
+                Reason
+              </label>
+              <select
+                value={cancelReason}
+                onChange={(e) => setCancelReason(e.target.value as CancellationReasonValue)}
+                className="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm focus:border-rose-400 focus:outline-none focus:ring-1 focus:ring-rose-400"
+              >
+                <option value="no_show">No-show</option>
+                <option value="patient_cancelled">Patient cancelled</option>
+                <option value="client_cancelled">Client cancelled</option>
+                <option value="other">Other</option>
+              </select>
+            </div>
+            <div className="flex items-end justify-end gap-3">
+              <button
+                type="button"
+                onClick={() => setShowCancel(false)}
+                className="rounded-xl border border-slate-200 bg-white px-4 py-2 text-sm font-medium text-slate-600 transition hover:bg-slate-50"
+              >
+                Back
+              </button>
+              <button
+                type="button"
+                disabled={cancelling}
+                onClick={() => void handleCancel()}
+                className="inline-flex items-center gap-2 rounded-xl bg-rose-600 px-4 py-2 text-sm font-medium text-white transition hover:bg-rose-700 disabled:opacity-60"
+              >
+                <XCircle className="h-4 w-4" />
+                {cancelling ? 'Cancelling…' : 'Confirm cancellation'}
+              </button>
+            </div>
+          </div>
+        )}
 
         {showUpload && (
           <form

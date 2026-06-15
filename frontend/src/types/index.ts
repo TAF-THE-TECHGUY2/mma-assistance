@@ -9,7 +9,14 @@ export type CaseStatus =
   | 'in_progress'
   | 'admin_review'
   | 'billing'
-  | 'closed';
+  | 'closed'
+  | 'cancelled';
+
+export type CancellationReason =
+  | 'no_show'
+  | 'patient_cancelled'
+  | 'client_cancelled'
+  | 'other';
 
 export type WorkflowStage =
   | 'operations'
@@ -52,10 +59,11 @@ export interface Patient {
   gender: string;
   phone: string;
   email?: string | null;
-  id_number: string;
-  mma_file_number: string;
-  area: string;
-  treating_doctor: string;
+  id_number?: string | null;
+  passport_number?: string | null;
+  mma_file_number?: string | null;
+  area?: string | null;
+  treating_doctor?: string | null;
   date_registered: string;
   address?: string | null;
   emergency_contact?: string | null;
@@ -72,6 +80,7 @@ export interface MedicalCase {
   case_type: CaseType;
   treating_doctor?: string | null;
   notes?: string | null;
+  cancellation_reason?: CancellationReason | null;
   case_status: CaseStatus;
   workflow_stage: WorkflowStage;
   priority: Priority;
@@ -97,6 +106,7 @@ export interface InpatientDetail {
   id: number;
   case_id: number;
   file_number?: string | null;
+  hospital?: string | null;
   admission_date?: string | null;
   discharge_date?: string | null;
   date_to_admin?: string | null;

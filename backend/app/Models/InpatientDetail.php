@@ -18,6 +18,7 @@ class InpatientDetail extends Model
     protected $fillable = [
         'case_id',
         'file_number',
+        'hospital',
         'admission_date',
         'discharge_date',
         'date_to_admin',

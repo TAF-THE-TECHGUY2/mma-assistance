@@ -23,6 +23,7 @@ class Patient extends Model
         'phone',
         'email',
         'id_number',
+        'passport_number',
         'mma_file_number',
         'area',
         'treating_doctor',

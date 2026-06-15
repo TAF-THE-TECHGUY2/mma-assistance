@@ -86,7 +86,7 @@ Then:
 php artisan migrate --force
 php artisan db:seed --force        # OPTIONAL demo data; skip for a clean start
 php artisan storage:link
-php artisan config:cache route:cache
+php artisan optimize          # caches config + routes + views for production
 ```
 
 ## 6. Build the frontend into the web root
@@ -127,7 +127,7 @@ Browse to **http://EC2_IP** and log in (`owner@mma.test` / `password` if you see
 ## Redeploy after changes
 ```bash
 cd /var/www/mma && git pull
-cd backend && composer install --no-dev --optimize-autoloader && php artisan migrate --force && php artisan config:cache route:cache
+cd backend && composer install --no-dev --optimize-autoloader && php artisan migrate --force && php artisan optimize:clear && php artisan optimize
 cd ../frontend && npm ci && npm run build && cp -r dist/* ../backend/public/
 sudo systemctl restart mma-queue && sudo systemctl reload nginx
 ```

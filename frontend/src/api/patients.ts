@@ -39,11 +39,10 @@ export async function getPatient(id: number | string): Promise<Patient> {
 
 export async function createPatient(
   payload: Partial<PatientPayload>,
+  options: { force?: boolean } = {},
 ): Promise<Patient> {
-  const { data } = await api.post<SingleResponse<Patient>>(
-    '/patients',
-    payload,
-  );
+  const body = options.force ? { ...payload, force: true } : payload;
+  const { data } = await api.post<SingleResponse<Patient>>('/patients', body);
   return data.data;
 }
 

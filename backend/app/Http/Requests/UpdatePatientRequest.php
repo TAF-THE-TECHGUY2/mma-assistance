@@ -50,10 +50,18 @@ class UpdatePatientRequest extends FormRequest
 
             'id_number'         => [
                 'sometimes',
-                'required',
+                'nullable',
                 'string',
                 'regex:/^[0-9]{13}$/',
                 Rule::unique('patients', 'id_number')->ignore($id),
+            ],
+
+            'passport_number'   => [
+                'sometimes',
+                'nullable',
+                'string',
+                'max:50',
+                Rule::unique('patients', 'passport_number')->ignore($id),
             ],
 
             'mma_file_number'   => [

@@ -8,7 +8,7 @@ import {
   type SetStateAction,
 } from 'react';
 import { Link } from 'react-router-dom';
-import { Download, FlaskConical, Pencil, Printer, RefreshCw, X } from 'lucide-react';
+import { Download, FlaskConical, Pencil, Plus, Printer, RefreshCw, X } from 'lucide-react';
 
 import type { InvoiceStatus, LaboratoryDetail, MedicalCase } from '../types';
 import { getCases, getLaboratoryDetail, updateLaboratoryDetail } from '../api/cases';
@@ -382,6 +382,13 @@ export default function LaboratoryRequests() {
           </div>
         </div>
         <div className="flex flex-wrap items-center gap-2">
+          <Link
+            to="/cases/create?type=laboratory"
+            className="inline-flex items-center gap-2 rounded-lg bg-teal-600 px-4 py-2 text-sm font-medium text-white shadow-sm transition hover:bg-teal-700"
+          >
+            <Plus className="h-4 w-4" />
+            New Lab Request
+          </Link>
           <button
             type="button"
             onClick={() => void load()}

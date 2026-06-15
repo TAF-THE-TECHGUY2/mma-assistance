@@ -64,6 +64,25 @@ class PatientController extends Controller
     {
         $data = $request->validated();
 
+        // Soft duplicate guard: with ID now optional, warn when a patient with
+        // the same name + date of birth already exists (overridable with "force").
+        if (! $request->boolean('force')) {
+            $duplicate = Patient::query()
+                ->whereRaw('LOWER(first_name) = ?', [mb_strtolower($data['first_name'])])
+                ->whereRaw('LOWER(surname) = ?', [mb_strtolower($data['surname'])])
+                ->whereDate('date_of_birth', $data['date_of_birth'])
+                ->first();
+
+            if ($duplicate) {
+                return response()->json([
+                    'message' => "A patient named {$duplicate->first_name} {$duplicate->surname} "
+                        . 'with the same date of birth already exists. Select the existing patient, '
+                        . 'or choose "Add anyway" to create a separate record.',
+                    'duplicate_warning' => true,
+                ], 409);
+            }
+        }
+
         $patient = Patient::create($data);
 
         AuditService::log(

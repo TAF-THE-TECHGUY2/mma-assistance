@@ -52,6 +52,7 @@ const TONES: Record<string, Tone> = {
   admin_review: { bg: 'bg-violet-100', text: 'text-violet-700', dot: 'bg-violet-500' },
   billing: { bg: 'bg-indigo-100', text: 'text-indigo-700', dot: 'bg-indigo-500' },
   closed: { bg: 'bg-slate-100', text: 'text-slate-600', dot: 'bg-slate-400' },
+  cancelled: { bg: 'bg-rose-100', text: 'text-rose-700', dot: 'bg-rose-500' },
 
   // WorkflowStage (operations + the shared admin_review/billing/closed above)
   operations: { bg: 'bg-teal-100', text: 'text-teal-700', dot: 'bg-teal-500' },

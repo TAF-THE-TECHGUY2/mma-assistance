@@ -35,6 +35,7 @@ class MedicalCase extends Model
     public const STATUS_ADMIN_REVIEW = 'admin_review';
     public const STATUS_BILLING = 'billing';
     public const STATUS_CLOSED = 'closed';
+    public const STATUS_CANCELLED = 'cancelled';
 
     /**
      * Canonical workflow stages.
@@ -71,6 +72,7 @@ class MedicalCase extends Model
         'date_opened',
         'due_date',
         'notes',
+        'cancellation_reason',
     ];
 
     /**

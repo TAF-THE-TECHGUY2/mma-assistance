@@ -133,6 +133,10 @@ Route::middleware('auth:sanctum')->group(function () {
         ->middleware('role:admin,owner')
         ->name('cases.close');
 
+    Route::post('/cases/{case}/cancel', [CaseController::class, 'cancel'])
+        ->middleware('role:booking,operations,admin,owner')
+        ->name('cases.cancel');
+
     /*
     |----------------------------------------------------------------------
     | Case type detail records

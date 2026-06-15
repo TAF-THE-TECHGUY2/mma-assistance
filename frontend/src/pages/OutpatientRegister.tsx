@@ -8,7 +8,7 @@ import {
   type SetStateAction,
 } from 'react';
 import { Link } from 'react-router-dom';
-import { Download, Pencil, Printer, RefreshCw, Stethoscope, X } from 'lucide-react';
+import { Download, Pencil, Plus, Printer, RefreshCw, Stethoscope, X } from 'lucide-react';
 
 import type { MedicalCase, OutpatientDetail } from '../types';
 import { getCases, getOutpatientDetail, updateOutpatientDetail } from '../api/cases';
@@ -396,6 +396,13 @@ export default function OutpatientRegister() {
           </div>
         </div>
         <div className="flex flex-wrap items-center gap-2">
+          <Link
+            to="/cases/create?type=outpatient"
+            className="inline-flex items-center gap-2 rounded-lg bg-teal-600 px-4 py-2 text-sm font-medium text-white shadow-sm transition hover:bg-teal-700"
+          >
+            <Plus className="h-4 w-4" />
+            New Outpatient
+          </Link>
           <button
             type="button"
             onClick={() => void load()}

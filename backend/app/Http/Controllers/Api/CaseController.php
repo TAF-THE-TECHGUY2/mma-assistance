@@ -66,7 +66,7 @@ class CaseController extends Controller
         if ($request->boolean('overdue')) {
             $query->whereNotNull('due_date')
                 ->whereDate('due_date', '<', now()->toDateString())
-                ->where('case_status', '!=', MedicalCase::STATUS_CLOSED);
+                ->whereNotIn('case_status', [MedicalCase::STATUS_CLOSED, MedicalCase::STATUS_CANCELLED]);
         }
 
         if ($dueFrom = $request->query('due_from')) {
@@ -108,7 +108,7 @@ class CaseController extends Controller
     {
         $query = MedicalCase::query()
             ->with('patient')
-            ->where('case_status', '!=', MedicalCase::STATUS_CLOSED);
+            ->whereNotIn('case_status', [MedicalCase::STATUS_CLOSED, MedicalCase::STATUS_CANCELLED]);
 
         if ($type = $request->query('case_type')) {
             $query->where('case_type', $type);
@@ -135,7 +135,7 @@ class CaseController extends Controller
             'file_number' => ['nullable', 'string', 'max:255'],
             'treating_doctor' => ['nullable', 'string', 'max:255'],
             'notes' => ['nullable', 'string'],
-            'case_status' => ['nullable', 'in:booked,in_progress,admin_review,billing,closed'],
+            'case_status' => ['nullable', 'in:booked,in_progress,admin_review,billing,closed,cancelled'],
             'workflow_stage' => ['nullable', 'in:operations,admin_review,billing,closed'],
             'priority' => ['nullable', 'in:low,medium,high,urgent'],
             'assigned_department' => ['nullable', 'string', 'max:255'],
@@ -143,6 +143,7 @@ class CaseController extends Controller
             'due_date' => ['nullable', 'date'],
             // Optional detail-record seed fields captured at booking.
             'admission_date' => ['nullable', 'date'],
+            'hospital' => ['nullable', 'string', 'max:255'],
             'consult_date' => ['nullable', 'date'],
             'ongoing_treatment' => ['nullable', 'boolean'],
             'appointment_date' => ['nullable', 'date'],
@@ -239,7 +240,7 @@ class CaseController extends Controller
         $case = MedicalCase::findOrFail($id);
 
         $data = $request->validate([
-            'case_status' => ['sometimes', 'in:booked,in_progress,admin_review,billing,closed'],
+            'case_status' => ['sometimes', 'in:booked,in_progress,admin_review,billing,closed,cancelled'],
             'workflow_stage' => ['sometimes', 'in:operations,admin_review,billing,closed'],
             'priority' => ['sometimes', 'in:low,medium,high,urgent'],
             'assigned_department' => ['nullable', 'string', 'max:255'],
@@ -341,6 +342,58 @@ class CaseController extends Controller
             messageVerb: 'closed',
             event: 'case_closed'
         );
+    }
+
+    /**
+     * POST /api/cases/{id}/cancel
+     * Mark a case as cancelled / no-show with a reason. Drops it off the
+     * Upcoming list and is tracked separately from closed (completed) cases.
+     */
+    public function cancel(Request $request, int $id): JsonResponse
+    {
+        $data = $request->validate([
+            'cancellation_reason' => ['required', 'in:no_show,patient_cancelled,client_cancelled,other'],
+        ]);
+
+        $case = MedicalCase::with('patient')->findOrFail($id);
+        $before = [
+            'case_status' => $case->case_status,
+            'workflow_stage' => $case->workflow_stage,
+        ];
+
+        $case->update([
+            'case_status' => MedicalCase::STATUS_CANCELLED,
+            'workflow_stage' => MedicalCase::STAGE_CLOSED,
+            'cancellation_reason' => $data['cancellation_reason'],
+        ]);
+
+        $label = $this->reasonLabel($data['cancellation_reason']);
+
+        AuditService::log(
+            'case.cancelled',
+            $case,
+            ['before' => $before, 'after' => ['case_status' => 'cancelled', 'reason' => $data['cancellation_reason']]],
+            "Case {$case->case_number} cancelled ({$label})."
+        );
+
+        NotificationService::notify(
+            'case.cancelled',
+            "Case {$case->case_number} cancelled — {$label}.",
+            $case,
+            null,
+        );
+
+        return response()->json(['data' => $case->load('patient')]);
+    }
+
+    private function reasonLabel(string $reason): string
+    {
+        return match ($reason) {
+            'no_show' => 'no-show',
+            'patient_cancelled' => 'patient cancelled',
+            'client_cancelled' => 'client cancelled',
+            default => 'other',
+        };
     }
 
     /**
@@ -464,6 +517,7 @@ class CaseController extends Controller
             case 'inpatient':
                 \App\Models\InpatientDetail::create([
                     'case_id' => $case->id,
+                    'hospital' => $seed['hospital'] ?? null,
                     'admission_date' => $seed['admission_date'] ?? null,
                 ]);
                 break;

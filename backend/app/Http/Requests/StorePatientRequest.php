@@ -30,12 +30,21 @@ class StorePatientRequest extends FormRequest
             'phone'             => ['required', 'string', 'max:50'],
             'email'             => ['nullable', 'email:rfc', 'max:255'],
 
-            // South African ID number: 13 digits, must be unique.
+            // South African ID number: optional (passport may be used instead);
+            // when supplied it must be 13 digits and unique.
             'id_number'         => [
-                'required',
+                'nullable',
                 'string',
                 'regex:/^[0-9]{13}$/',
                 Rule::unique('patients', 'id_number'),
+            ],
+
+            // Passport number: optional, unique when supplied.
+            'passport_number'   => [
+                'nullable',
+                'string',
+                'max:50',
+                Rule::unique('patients', 'passport_number'),
             ],
 
             // MMA file number: optional now (the per-visit file number lives on

@@ -32,6 +32,7 @@ class InpatientDetailController extends Controller
 
         $data = $request->validate([
             'file_number' => ['nullable', 'string', 'max:255'],
+            'hospital' => ['nullable', 'string', 'max:255'],
             'admission_date' => ['nullable', 'date'],
             'discharge_date' => ['nullable', 'date'],
             'date_to_admin' => ['nullable', 'date'],

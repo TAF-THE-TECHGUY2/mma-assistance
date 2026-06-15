@@ -61,6 +61,7 @@ class RegisterController extends Controller
                 $this->date($c->date_opened),
                 $c->file_number ?? ($d->file_number ?? ''),
                 $this->patientName($c),
+                $d->hospital ?? '',
                 $this->date($d->admission_date ?? null),
                 $this->date($d->discharge_date ?? null),
                 $this->date($d->date_to_admin ?? null),
@@ -74,7 +75,7 @@ class RegisterController extends Controller
 
         return [
             'IN PATIENT MANAGEMENT REGISTER',
-            ['File Date', 'File No', 'Name of Patient', 'Admission Date', 'Discharge Date', 'Date to Admin', 'MR Req', 'MR Rec', 'Admin Closure Date', 'Submission Date', 'Date Pastel'],
+            ['File Date', 'File No', 'Name of Patient', 'Hospital', 'Admission Date', 'Discharge Date', 'Date to Admin', 'MR Req', 'MR Rec', 'Admin Closure Date', 'Submission Date', 'Date Pastel'],
             $rows,
             'Inpatient-Management-Register.xlsx',
         ];
