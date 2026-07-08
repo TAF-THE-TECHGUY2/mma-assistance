@@ -24,6 +24,13 @@ export interface PrintRegisterOptions<T = unknown> {
   title: string;
   /** Optional line under the title, e.g. a date. */
   subtitle?: string;
+  /**
+   * Optional label/value block rendered above the table — used by documents
+   * like the patient profile (demographics before the case history).
+   */
+  info?: { label: string; value: string }[];
+  /** Optional heading shown between the info block and the table. */
+  tableTitle?: string;
   columns: PrintColumn<T>[];
   rows: T[];
   orientation?: 'portrait' | 'landscape';
@@ -59,6 +66,18 @@ export function printRegister<T>(opts: PrintRegisterOptions<T>): void {
 
   const generated = new Date().toLocaleString();
 
+  const infoBlock = opts.info?.length
+    ? `<div class="info">${opts.info
+        .map(
+          (i) =>
+            `<div class="item"><div class="lbl">${esc(i.label)}</div><div class="val">${esc(i.value || '—')}</div></div>`,
+        )
+        .join('')}</div>`
+    : '';
+  const tableTitle = opts.tableTitle
+    ? `<div class="tbl-title">${esc(opts.tableTitle)}</div>`
+    : '';
+
   const html = `<!doctype html>
 <html lang="en">
 <head>
@@ -77,6 +96,11 @@ export function printRegister<T>(opts: PrintRegisterOptions<T>): void {
   .title { text-align:center; font-weight:bold; font-size:13px; background:#ededed;
            border:1px solid #999; padding:5px; margin:6px 0 10px; letter-spacing:1px; }
   .sub { font-size:12px; margin:0 0 8px; }
+  .info { display:grid; grid-template-columns:repeat(3, 1fr); gap:8px 18px;
+          border:1px solid #999; padding:10px 12px; margin:0 0 14px; }
+  .info .lbl { font-size:9px; text-transform:uppercase; letter-spacing:0.5px; color:#666; }
+  .info .val { font-size:12px; margin-top:1px; }
+  .tbl-title { font-weight:bold; font-size:12px; margin:0 0 6px; letter-spacing:0.5px; }
   table { width:100%; border-collapse:collapse; font-size:10px; }
   th, td { border:1px solid #000; padding:3px 5px; text-align:left; vertical-align:top; }
   th { background:#d9d9d9; font-weight:bold; }
@@ -96,6 +120,8 @@ export function printRegister<T>(opts: PrintRegisterOptions<T>): void {
   </div>
   <div class="title">${esc(opts.title)}</div>
   ${opts.subtitle ? `<div class="sub">${esc(opts.subtitle)}</div>` : ''}
+  ${infoBlock}
+  ${tableTitle}
   <table>
     <thead><tr>${headCells}</tr></thead>
     <tbody>${bodyRows}${padRows}</tbody>

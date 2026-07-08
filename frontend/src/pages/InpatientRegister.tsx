@@ -147,7 +147,7 @@ export default function InpatientRegister() {
     setLoading(true);
     setError(null);
     try {
-      const result = await getCases({ case_type: 'inpatient', per_page: 200 });
+      const result = await getCases({ case_type: 'inpatient', per_page: 1000 });
       const cases = toArray<MedicalCase>(result);
 
       // The list endpoint does not eager-load detail rows, so fetch each
@@ -200,6 +200,7 @@ export default function InpatientRegister() {
         header: 'Name of Patient',
         value: (r) => (r.case.patient ? `${r.case.patient.first_name} ${r.case.patient.surname}` : ''),
       },
+      { header: 'Hospital', value: (r) => r.detail?.hospital ?? '' },
       { header: 'Admission Date', value: (r) => d(r.detail?.admission_date) },
       { header: 'Discharge Date', value: (r) => d(r.detail?.discharge_date) },
       { header: 'Date to Admin', value: (r) => d(r.detail?.date_to_admin) },

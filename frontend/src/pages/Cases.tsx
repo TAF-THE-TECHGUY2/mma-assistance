@@ -63,7 +63,7 @@ export default function Cases() {
     let active = true;
     setLoading(true);
     setError(null);
-    getCases()
+    getCases({ per_page: 1000 })
       .then((res) => {
         if (active) setCases(res.data);
       })

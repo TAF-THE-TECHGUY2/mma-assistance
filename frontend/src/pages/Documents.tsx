@@ -96,7 +96,7 @@ export default function Documents() {
     setLoading(true);
     setError(null);
     try {
-      const raw = await getDocuments();
+      const raw = await getDocuments({ per_page: 1000 });
       setDocuments(normalise(raw));
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to load documents.');

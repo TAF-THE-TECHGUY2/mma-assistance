@@ -143,7 +143,7 @@ export default function LaboratoryRequests() {
     setLoading(true);
     setError(null);
     try {
-      const result = await getCases({ case_type: 'laboratory', per_page: 200 });
+      const result = await getCases({ case_type: 'laboratory', per_page: 1000 });
       const cases = toArray<MedicalCase>(result);
 
       const built = await Promise.all(

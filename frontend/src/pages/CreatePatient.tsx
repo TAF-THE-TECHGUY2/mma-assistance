@@ -13,7 +13,6 @@ type PatientFormState = {
   email: string;
   id_number: string;
   passport_number: string;
-  mma_file_number: string;
   area: string;
   treating_doctor: string;
   date_registered: string;
@@ -35,7 +34,6 @@ const initialState: PatientFormState = {
   email: '',
   id_number: '',
   passport_number: '',
-  mma_file_number: '',
   area: '',
   treating_doctor: '',
   date_registered: today,
@@ -46,8 +44,6 @@ const initialState: PatientFormState = {
 
 // South African ID number: 13 digits.
 const ID_NUMBER_RE = /^\d{13}$/;
-// MMA file number: alphanumeric with optional dashes/slashes, 3-20 chars.
-const MMA_FILE_RE = /^[A-Za-z0-9/-]{3,20}$/;
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 function validate(form: PatientFormState): FormErrors {
@@ -65,13 +61,6 @@ function validate(form: PatientFormState): FormErrors {
   // only when an ID number is entered.
   if (form.id_number.trim() && !ID_NUMBER_RE.test(form.id_number.trim())) {
     errors.id_number = 'ID number must be exactly 13 digits.';
-  }
-
-  // File number is now optional (the per-visit file number lives on the case);
-  // only validate its format when one is provided.
-  if (form.mma_file_number.trim() && !MMA_FILE_RE.test(form.mma_file_number.trim())) {
-    errors.mma_file_number =
-      'File number must be 3-20 alphanumeric characters (dashes/slashes allowed).';
   }
 
   if (form.email.trim() && !EMAIL_RE.test(form.email.trim())) {
@@ -148,7 +137,6 @@ export default function CreatePatient() {
         email: form.email.trim() || null,
         id_number: form.id_number.trim() || null,
         passport_number: form.passport_number.trim() || null,
-        mma_file_number: form.mma_file_number.trim() || null,
         area: form.area.trim() || null,
         treating_doctor: form.treating_doctor.trim() || null,
         date_registered: form.date_registered,
@@ -351,21 +339,11 @@ export default function CreatePatient() {
               />
               <FieldError field="passport_number" />
             </div>
-            <div>
-              <label className="mb-1 block text-sm font-medium text-slate-700">
-                MMA File Number{' '}
-                <span className="font-normal text-slate-400">(optional)</span>
-              </label>
-              <input
-                type="text"
-                value={form.mma_file_number}
-                onChange={update('mma_file_number')}
-                className={inputClass('mma_file_number')}
-                placeholder="MMA-0001"
-              />
-              <FieldError field="mma_file_number" />
-            </div>
           </div>
+          <p className="mt-4 text-xs text-slate-400">
+            File numbers are captured per visit when you open a case — not on
+            the patient record.
+          </p>
         </section>
 
         <section className="rounded-xl border border-slate-200 bg-white p-6 shadow-sm">

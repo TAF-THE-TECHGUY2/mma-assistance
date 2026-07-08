@@ -8,6 +8,7 @@ import {
   Mail,
   MapPin,
   Phone,
+  Printer,
   Save,
   Stethoscope,
   User,
@@ -20,6 +21,8 @@ import {
   getPatientDocuments,
   updatePatient,
 } from '../api/patients';
+import { printRegister, type PrintColumn } from '../print/registerPrint';
+import { useAuth } from '../context/AuthContext';
 import StatusBadge from '../components/StatusBadge';
 
 type Tab = 'cases' | 'documents';
@@ -115,6 +118,52 @@ export default function PatientProfile() {
     () => (patient ? `${patient.first_name} ${patient.surname}`.trim() : ''),
     [patient]
   );
+
+  const { user } = useAuth();
+
+  /**
+   * Branded patient-summary printout: demographics block + full case history
+   * (per-visit file numbers). Opens the print dialog — print or "Save as PDF".
+   */
+  const handleDownloadProfile = () => {
+    if (!patient) return;
+
+    const info = [
+      { label: 'Full Name', value: fullName },
+      { label: 'Date of Birth', value: formatDate(patient.date_of_birth) },
+      { label: 'Gender', value: patient.gender ?? '' },
+      { label: 'ID Number', value: patient.id_number ?? '' },
+      { label: 'Passport Number', value: patient.passport_number ?? '' },
+      { label: 'Phone', value: patient.phone ?? '' },
+      { label: 'Email', value: patient.email ?? '' },
+      { label: 'Address', value: patient.address ?? '' },
+      { label: 'Emergency Contact', value: patient.emergency_contact ?? '' },
+      { label: 'Medical Aid Number', value: patient.medical_aid_number ?? '' },
+      { label: 'Area', value: patient.area ?? '' },
+      { label: 'Date Registered', value: formatDate(patient.date_registered) },
+    ];
+
+    const columns: PrintColumn<MedicalCase>[] = [
+      { header: 'Case #', value: (c) => c.case_number },
+      { header: 'File #', value: (c) => c.file_number ?? '' },
+      { header: 'Type', value: (c) => c.case_type },
+      { header: 'Treating Doctor', value: (c) => c.treating_doctor ?? '' },
+      { header: 'Status', value: (c) => c.case_status.replace(/_/g, ' ') },
+      { header: 'Opened', value: (c) => formatDate(c.date_opened) },
+      { header: 'Due', value: (c) => (c.due_date ? formatDate(c.due_date) : '') },
+    ];
+
+    printRegister({
+      title: 'PATIENT PROFILE',
+      subtitle: `Generated ${new Date().toLocaleDateString()}${user ? ` by ${user.name}` : ''} — confidential patient information`,
+      info,
+      tableTitle: `Case History (${cases.length})`,
+      columns,
+      rows: cases,
+      orientation: 'portrait',
+      minRows: 5,
+    });
+  };
 
   const beginEdit = () => {
     if (!patient) return;
@@ -221,14 +270,24 @@ export default function PatientProfile() {
           Back to patients
         </Link>
         {!editing && (
-          <button
-            type="button"
-            onClick={beginEdit}
-            className="inline-flex items-center gap-2 rounded-lg border border-slate-300 bg-white px-4 py-2 text-sm font-medium text-slate-700 shadow-sm transition hover:bg-slate-50"
-          >
-            <Edit3 className="h-4 w-4" />
-            Edit Patient
-          </button>
+          <div className="flex items-center gap-2">
+            <button
+              type="button"
+              onClick={handleDownloadProfile}
+              className="inline-flex items-center gap-2 rounded-lg bg-teal-600 px-4 py-2 text-sm font-medium text-white shadow-sm transition hover:bg-teal-700"
+            >
+              <Printer className="h-4 w-4" />
+              Download Profile
+            </button>
+            <button
+              type="button"
+              onClick={beginEdit}
+              className="inline-flex items-center gap-2 rounded-lg border border-slate-300 bg-white px-4 py-2 text-sm font-medium text-slate-700 shadow-sm transition hover:bg-slate-50"
+            >
+              <Edit3 className="h-4 w-4" />
+              Edit Patient
+            </button>
+          </div>
         )}
       </div>
 
@@ -244,7 +303,11 @@ export default function PatientProfile() {
                 <div>
                   <h1 className="text-2xl font-semibold text-slate-800">{fullName}</h1>
                   <p className="text-sm text-slate-500">
-                    File #{patient.mma_file_number} · ID {patient.id_number}
+                    {patient.id_number
+                      ? `ID ${patient.id_number}`
+                      : patient.passport_number
+                        ? `Passport ${patient.passport_number}`
+                        : 'No ID / passport on record'}
                   </p>
                 </div>
               </div>
@@ -407,6 +470,7 @@ export default function PatientProfile() {
                   <thead>
                     <tr className="text-left text-xs font-semibold uppercase tracking-wide text-slate-500">
                       <th className="px-3 py-2">Case #</th>
+                      <th className="px-3 py-2">File #</th>
                       <th className="px-3 py-2">Type</th>
                       <th className="px-3 py-2">Status</th>
                       <th className="px-3 py-2">Priority</th>
@@ -422,6 +486,9 @@ export default function PatientProfile() {
                       >
                         <td className="px-3 py-2 font-medium text-teal-700">
                           {c.case_number}
+                        </td>
+                        <td className="px-3 py-2 text-slate-700">
+                          {c.file_number ?? <span className="text-slate-400">—</span>}
                         </td>
                         <td className="px-3 py-2 capitalize text-slate-700">
                           {c.case_type}

@@ -17,7 +17,7 @@ export default function Patients() {
       setLoading(true);
       setError(null);
       try {
-        const res = await getPatients();
+        const res = await getPatients({ per_page: 1000 });
         if (!cancelled) setPatients(res.data);
       } catch (err) {
         if (!cancelled) {
@@ -41,15 +41,6 @@ export default function Patients() {
   const columns = useMemo<Column<Patient>[]>(
     () => [
       {
-        key: 'mma_file_number',
-        header: 'MMA File #',
-        sortable: true,
-        accessor: (p) => p.mma_file_number,
-        render: (p) => (
-          <span className="font-medium text-teal-700">{p.mma_file_number}</span>
-        ),
-      },
-      {
         key: 'name',
         header: 'Name',
         sortable: true,
@@ -66,9 +57,10 @@ export default function Patients() {
       },
       {
         key: 'id_number',
-        header: 'ID Number',
+        header: 'ID / Passport',
         sortable: true,
-        accessor: (p) => p.id_number,
+        accessor: (p) => p.id_number ?? p.passport_number ?? '',
+        render: (p) => p.id_number ?? p.passport_number ?? '—',
       },
       {
         key: 'phone',
@@ -135,7 +127,7 @@ export default function Patients() {
           columns={columns}
           loading={loading}
           searchable
-          searchPlaceholder="Search by name, file number, ID, area..."
+          searchPlaceholder="Search by name, ID/passport, phone, area..."
           rowKey={(p) => p.id}
           onRowClick={(p) => navigate(`/patients/${p.id}`)}
           emptyMessage="No patients found. Click “New Patient” to register one."

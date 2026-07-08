@@ -65,7 +65,7 @@ export default function CreateCase() {
   useEffect(() => {
     let active = true;
     setLoadingPatients(true);
-    getPatients()
+    getPatients({ per_page: 1000 })
       .then((res) => {
         if (active) setPatients(res.data);
       })
