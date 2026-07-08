@@ -3,6 +3,14 @@
 /frontend/node_modules/
 /frontend/dist/
 
+# Frontend build output copied into the Laravel web root at deploy time.
+# These are generated on the server (npm run build && cp), never committed —
+# committing them collides with the server's own copies on git pull.
+/backend/public/assets/
+/backend/public/index.html
+/backend/public/favicon.svg
+/backend/public/mma-logo.png
+
 # ===== Environment & secrets (NEVER commit) =====
 .env
 **/.env
